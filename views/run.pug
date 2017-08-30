@@ -1,0 +1,115 @@
+extends layout
+
+block content
+	h1= title
+	p Here it is the Run page. Results of polling Servers that are in 'run' mode is shown here.
+	
+	div(id='div0')
+	div(id='div1')
+	div(id='div2')
+	div(id='div3')
+	div(id='div4')
+	div(id='div5')
+	div(id='div6')
+	div(id='div7')
+	div(id='div8')
+	div(id='div9')
+	div(id='div10')
+	div(id='div11')
+	div(id='div12')
+	div(id='div13')
+	div(id='div14')
+
+
+	script.
+		socket.on('connect', function(){
+			console.log('Socket Connected.');
+		});
+
+		socket.on('mydata', function(data){
+			console.log(data[4].server_name);
+
+			var coils = data[0];
+			var holdings = data[1];
+			var dis = data[3];
+			var inregs = data[2];
+			var id = data[5].id;		
+			var unit_id = data[7].unit_id;	
+
+			console.log('unit_id: '+unit_id);
+			console.log('ip_add: '+data[6].IP);
+
+			var myHtml = "<h2>" + data[4].server_name +"</h2>";
+			myHtml += "<h3>" + data[6].IP +"</h3>";
+			myHtml += "<div class='row'>";
+			myHtml += "<div class='col-md-3'>";
+            
+			myHtml +=	"<h4>Coils:</h4><p>Coils are False or True.</p>"	                
+			var rows = "";
+			if(coils.res != null){
+				for (var i = 0; i < coils.Len ; i++){
+					rows += coils.Add + i +' - ' + coils.Tags[i] + ' - ' + coils.res[i] + '<br>';
+					}
+			}
+			else{
+				rows = JSON.stringify(coils.error.message);
+			}
+			myHtml += rows + "</div>";
+
+			myHtml += "<div class='col-md-3'>";
+			myHtml +=	"<h4>Holding Registers:</h4><p>16bits Values.</p>"	                
+			var rows = "";
+			if(holdings.res != null){
+				for (var i = 0; i < holdings.Len ; i++){
+					rows += holdings.Add + i +' - ' + holdings.Tags[i] + ' - ' + holdings.res[i] + '<br>';
+				}
+				//- document.getElementById("holdings"+id).innerHTML=rows;
+			}
+			else{
+				//- document.getElementById("holdings"+id).innerHTML="holdings: " + JSON.stringify(holdings.error.message);
+				rows = JSON.stringify(holdings.error.message);
+			}
+			myHtml += rows + "</div>";
+
+			myHtml += "<div class='col-md-3'>";
+			myHtml +=	"<h4>Discrete Inputs:</h4><p>Binary Inputs are False or True.</p>"	                
+			var rows = "";
+			if(dis.res != null){
+				for (var i = 0; i < dis.Len ; i++){
+					rows += dis.Add + i +' - ' + dis.Tags[i] + ' - ' + dis.res[i] + '<br>';
+					}
+				//- document.getElementById("dis"+id).innerHTML=rows;
+			}
+			else{
+				//- document.getElementById("dis"+id).innerHTML="dis: " + JSON.stringify(dis.error.message);
+				rows = JSON.stringify(dis.error.message);
+			}
+
+			myHtml += rows + "</div>";
+
+			myHtml += "<div class='col-md-3'>";
+			myHtml +=	"<h4>Input Registers:</h4><p>16bits Values..</p>"	                
+			var rows = "";			
+			if(inregs.res != null){
+				for (var i = 0; i < inregs.Len ; i++){
+					rows += inregs.Add + i +' - ' + inregs.Tags[i] + ' - ' + inregs.res[i] + '<br>';
+					}
+				//- document.getElementById("inregs"+id).innermyHtml=rows;
+			}
+			else{
+				//- document.getElementById("inregs"+id).innerHTML="inregs: " + JSON.stringify(inregs.error.message);
+				rows = JSON.stringify(inregs.error.message);
+			}
+			myHtml += rows + "</div>";
+
+			myHtml += "<hr></div><hr>";
+			var myDiv = '#div'+unit_id;
+			$(myDiv).html(myHtml);
+			//- console.log(myDiv);
+		});
+
+
+
+
+
+
