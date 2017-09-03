@@ -3,7 +3,9 @@ extends layout
 block content
 	h1= title
 	p Here it is the Run page. Results of polling Servers that are in 'run' mode is shown here.
-	
+	h3 Link Status:
+	span(id="linkstatus")
+	hr
 	div(id='div0')
 	div(id='div1')
 	div(id='div2')
@@ -23,8 +25,16 @@ block content
 
 	script.
 		socket.on('connect', function(){
-			console.log('Socket Connected.');
+			console.log('connected!', socket.connected);
+			$('#linkstatus').text("Online :-)");
+			$('#linkstatus').css('color', 'green');
 		});
+
+		socket.on('disconnect',function(){
+			console.log('disconnected!', socket.disconnect);
+			$('#linkstatus').text("Offline :-(");
+			$('#linkstatus').css('color', 'red');
+		});		
 
 		socket.on('mydata', function(data){
 			console.log(data[4].server_name);

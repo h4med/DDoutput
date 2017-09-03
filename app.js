@@ -40,6 +40,8 @@ const passportConfig = require('./config/passport');
 const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
+// io.set('heartbeat timeout', 3000);
+// io.set('heartbeat interval', 2000);
 
 const log = console.log;
 
@@ -68,7 +70,7 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(expressStatusMonitor());
 app.use(compression());
 
-// app.use(logger('dev'));
+app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(expressValidator()); // should be after bodyParser middlewares!
@@ -131,6 +133,7 @@ app.post('/device/change-password', passportConfig.isAuthenticated, deviceContro
 const SerialPort = require("serialport");
 const Readline = SerialPort.parsers.Readline;
 const port = new SerialPort("/dev/serial0", {
+  // baudRate: 115200
   // baudRate: 230400
   baudRate: 460800
   // baudRate: 921600
@@ -143,23 +146,66 @@ var led = new GPIO(17, 'out'), iv;
 // led.writeSync(0);
 var blink = 0;
 
+port.on('error', function(err){
+  log('Error: ', err.message);
+});
+
+port.on('open', function(err){
+  if(err){
+    log('Error: ', err.message);
+  }
+  else{
+    log('Port successfully open!');
+  }
+  
+});
+
+var serial_is_running = 0;
+
+function isJSON(str){
+  try{
+    JSON.parse(str);
+  } catch (e){
+    return false;
+  }
+  return true;
+}
+
+// var cntr = 0;
 parser.on('data', function (data) {
-  var dataJS = JSON.parse(data);
-  // console.log(dataJS);
-  io.emit('mydata', dataJS);
-  // toggle = 1 - toggle;
-  // led.writeSync(toggle);
-  // console.log(toggle)
+  if(isJSON(data)){
+    var dataJS = JSON.parse(data);
+    io.emit('mydata', dataJS);
+  }
   blink = 1;
+  serial_is_running = 1;
+});
+
+
+setInterval(function(){
+  if(serial_is_running == 0){
+    process.exit(1); // to reset application via forever
+  }
+  else{
+    serial_is_running = 0;
+  }
+}, 10000); // checks that serial read is working!
+
+process.on('unhandledRejection', (reason, p) => {
+  log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  process.exit(1); // to reset application via forever
 });
 
 iv = setInterval(function(){
   if(blink == 1){
-    led.writeSync(led.readSync() ^ 1);
+    led.writeSync(0);
     blink = 0;
+  }else{
+    led.writeSync(1);
   }
   // blink = 0;
 }, 250 );
+
 
 io.on('connection', function(socket){
   log('a user conneced!'); 
@@ -189,5 +235,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('partials/error');
 });
+
 
 module.exports = {app: app, server: server, io: io};
